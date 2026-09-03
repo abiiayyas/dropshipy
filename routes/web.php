@@ -13,7 +13,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TrackingController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect()->route('login'));
+Route::get('/', fn () => view('lp.home'));
 
 Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'))
     ->middleware(['auth'])

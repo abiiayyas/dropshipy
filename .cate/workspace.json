@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "name": "dropshipy",
+  "color": "#4a8ad0",
+  "dockState": {
+    "zones": {
+      "left": {
+        "position": "left",
+        "visible": false,
+        "size": 260,
+        "layout": null
+      },
+      "right": {
+        "position": "right",
+        "visible": false,
+        "size": 260,
+        "layout": null
+      },
+      "bottom": {
+        "position": "bottom",
+        "visible": false,
+        "size": 240,
+        "layout": null
+      },
+      "center": {
+        "position": "center",
+        "visible": true,
+        "size": 0,
+        "layout": {
+          "type": "tabs",
+          "id": "55866d4a-251c-442a-b41e-0351024b2fd8",
+          "panelIds": [
+            "34cd2e37-066d-4442-8b2c-4894cd7c6ce4"
+          ],
+          "activeIndex": 0
+        }
+      }
+    }
+  },
+  "panels": {
+    "a99bb540-0a41-4999-8aeb-40d5178f1dab": {
+      "type": "terminal",
+      "title": "PI Agent"
+    },
+    "2f74dc1c-d21b-410b-80ff-8e6a47a74474": {
+      "type": "browser",
+      "title": "Laravel Vite",
+      "tabs": [
+        {
+          "id": "tab-fddb05ff-09d3-4878-bd79-b0ad5cd14251",
+          "url": "http://localhost:5173/",
+          "title": "Laravel Vite",
+          "favicon": "http://localhost:5173/favicon.ico"
+        }
+      ],
+      "activeTabId": "tab-fddb05ff-09d3-4878-bd79-b0ad5cd14251"
+    },
+    "cced723a-9a16-4a38-a4dd-6d1c726fafc6": {
+      "type": "terminal",
+      "title": "Terminal 1"
+    },
+    "b03c33d9-dc38-4cff-9650-a3928a2481e5": {
+      "type": "terminal",
+      "title": "Terminal 2"
+    },
+    "34cd2e37-066d-4442-8b2c-4894cd7c6ce4": {
+      "type": "canvas",
+      "title": "Canvas"
+    }
+  },
+  "canvases": {
+    "34cd2e37-066d-4442-8b2c-4894cd7c6ce4": {
+      "id": "34cd2e37-066d-4442-8b2c-4894cd7c6ce4",
+      "canvasNodes": {
+        "72c35573-1ae7-4397-833b-fd0e0bf45b89": {
+          "id": "72c35573-1ae7-4397-833b-fd0e0bf45b89",
+          "origin": {
+            "x": -98.73122140994397,
+            "y": 31.271771194048927
+          },
+          "size": {
+            "width": 741.1014492753624,
+            "height": 437.9130434782608
+          },
+          "zOrder": 26,
+          "creationIndex": 0,
+          "animationState": "idle",
+          "dockLayout": {
+            "type": "tabs",
+            "id": "3c3c68ea-d8ec-49c8-9b46-d6447ba3a1fe",
+            "panelIds": [
+              "a99bb540-0a41-4999-8aeb-40d5178f1dab"
+            ],
+            "activeIndex": 0
+          }
+        },
+        "fbc5298d-c294-450a-a0b5-ee3c61f3dc0f": {
+          "id": "fbc5298d-c294-450a-a0b5-ee3c61f3dc0f",
+          "origin": {
+            "x": -874.8192771084338,
+            "y": 520
+          },
+          "size": {
+            "width": 1515.9207263837961,
+            "height": 860.0300830651798
+          },
+          "zOrder": 31,
+          "creationIndex": 1,
+          "animationState": "idle",
+          "dockLayout": {
+            "type": "tabs",
+            "id": "0bff7354-2c93-46b7-98cd-fb1c35aae619",
+            "panelIds": [
+              "2f74dc1c-d21b-410b-80ff-8e6a47a74474"
+            ],
+            "activeIndex": 0
+          }
+        },
+        "872b690d-d528-4cf3-9b3c-4da1c874012b": {
+          "id": "872b690d-d528-4cf3-9b3c-4da1c874012b",
+          "origin": {
+            "x": -880,
+            "y": 40
+          },
+          "size": {
+            "width": 741.1014492753624,
+            "height": 437.91304347826076
+          },
+          "zOrder": 23,
+          "creationIndex": 2,
+          "animationState": "idle",
+          "dockLayout": {
+            "type": "tabs",
+            "id": "39342301-915d-4b31-8d99-e6471e78289b",
+            "panelIds": [
+              "cced723a-9a16-4a38-a4dd-6d1c726fafc6"
+            ],
+            "activeIndex": 0
+          }
+        },
+        "ec322790-f8b1-483c-9808-445fa800d67a": {
+          "id": "ec322790-f8b1-483c-9808-445fa800d67a",
+          "origin": {
+            "x": 662.7559741132624,
+            "y": 527.419894245424
+          },
+          "size": {
+            "width": 740,
+            "height": 437.91304347826076
+          },
+          "zOrder": 30,
+          "creationIndex": 3,
+          "animationState": "idle",
+          "dockLayout": {
+            "type": "tabs",
+            "id": "c1fd9d51-9aeb-498b-92e0-e8cca977fc69",
+            "panelIds": [
+              "b03c33d9-dc38-4cff-9650-a3928a2481e5"
+            ],
+            "activeIndex": 0
+          }
+        }
+      },
+      "zoomLevel": 0.6175487061990842,
+      "viewportOffset": {
+        "x": 700.7228843669795,
+        "y": -97.65433444485268
+      }
+    }
+  }
+}
