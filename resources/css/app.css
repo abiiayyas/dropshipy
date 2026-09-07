@@ -1,3 +1,5 @@
 @import "tailwindcss";
+@config "../../tailwind.config.js";
 @import "../../node_modules/preline/variants.css";
 
+@custom-variant dark (&:where(.dark, .dark *));

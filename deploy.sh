@@ -12,9 +12,10 @@ echo "🔒 Mengaktifkan Mode Maintenance..."
 php artisan down --refresh=15 --secret="diginiaga-bypass-$(date +%s)" || true
 
 # 2. Tarik kode terbaru dari GitHub
-echo "📥 Mengambil update dari branch main..."
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "📥 Mengambil update dari branch $BRANCH..."
 git reset --hard
-git pull origin main
+git pull origin $BRANCH
 
 # 3. Update dependencies PHP
 echo "📦 Menginstal dependencies PHP (Composer)..."
