@@ -59,7 +59,7 @@ class MengantarService
     public function getShippingRates(array $origin, array $destination, array $items): array
     {
         if (empty($origin['area_id']) || empty($destination['area_id'])) {
-            return $this->fallbackRates();
+            return [];
         }
 
         $totalWeight = array_sum(array_column($items, 'weight'));
@@ -79,7 +79,7 @@ class MengantarService
         $result = $this->request('GET', 'order/estimate', $payload);
 
         if (!$result || !isset($result['data']) || empty($result['data'])) {
-            return $this->fallbackRates();
+            return [];
         }
 
         return $this->formatRates($result['data']);
@@ -115,7 +115,7 @@ class MengantarService
             'customerAddressDataId' => $order->customer_area_id,
             'customerPhone' => $order->customer_phone,
             'parcelContent' => $productName,
-            'weight' => max(1, ceil(($order->product->weight * $order->qty) / 1000)),
+            'weight' => max(1, $order->qty),
             'quantity' => $order->qty,
         ];
 

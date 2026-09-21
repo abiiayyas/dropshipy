@@ -23,7 +23,13 @@ class SettingController extends Controller
      */
     public function update(Request $request)
     {
-        $data = $request->except(['_token', '_method']);
+        $allowedKeys = [
+            'store_name', 'active_courier_provider', 'biteship_api_key', 
+            'global_pixel_id', 'fonnte_token', 'wa_buyer_notification_enabled', 
+            'telegram_bot_token', 'telegram_chat_id'
+        ];
+        
+        $data = $request->only($allowedKeys);
 
         // Set default checkbox values to 0 if not present in request
         if (!isset($data['wa_buyer_notification_enabled'])) {

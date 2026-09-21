@@ -250,8 +250,8 @@ class LandingPageController extends Controller
         $stats = [
             'total_orders' => $landingPage->orders()->count(),
             'total_revenue' => $landingPage->orders()->where('payment_status', 'paid')->sum('total_amount'),
-            'conversion_rate' => $landingPage->orders()->count() > 0
-                ? round(($landingPage->orders()->count() / max(1, $landingPage->orders()->count())) * 100, 1)
+            'conversion_rate' => $landingPage->visits > 0
+                ? round(($landingPage->orders()->count() / $landingPage->visits) * 100, 1)
                 : 0,
             'orders_today' => $landingPage->orders()->whereDate('created_at', today())->count(),
             'revenue_today' => $landingPage->orders()->whereDate('created_at', today())

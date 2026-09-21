@@ -67,7 +67,7 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/p/{slug}', [LPController::class, 'show'])->name('lp.show');
 
-Route::post('/lp/create-order', [LPController::class, 'createOrder'])->name('lp.order.create');
+Route::post('/lp/create-order', [LPController::class, 'createOrder'])->name('lp.order.create')->middleware('throttle:5,1');
 Route::get('/lp/search-area', [LPController::class, 'searchArea'])->name('lp.search-area');
 Route::get('/lp/shipping-options', [LPController::class, 'getShippingOptions'])->name('lp.shipping');
 

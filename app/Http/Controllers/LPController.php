@@ -39,15 +39,25 @@ class LPController extends Controller
     public function getShippingOptions(Request $request, BiteshipService $biteship)
     {
         $request->validate([
-            'destination_city' => 'required|string',
+            'destination_area_id' => 'nullable|string',
+            'destination_city' => 'nullable|string',
+            'landing_page_id' => 'required|exists:landing_pages,id',
         ]);
 
+        $landingPage = LandingPage::with('product.warehouse')->findOrFail($request->landing_page_id);
+        $originAreaId = $landingPage->product->warehouse->mengantar_area_id ?? config('services.biteship.origin_area_id', 'IDCGK101');
+
+        $destination = [];
+        if ($request->destination_area_id) {
+            $destination['area_id'] = $request->destination_area_id;
+        } elseif ($request->destination_city) {
+            $destination['city'] = $request->destination_city;
+        }
+        $destination['couriers'] = ['jne', 'jnt', 'sicepat'];
+
         $couriers = $biteship->getShippingRates(
-            ['area_id' => config('services.biteship.origin_area_id', 'IDCGK101')],
-            [
-                'city' => $request->destination_city,
-                'couriers' => ['jne', 'jnt', 'sicepat'],
-            ],
+            ['area_id' => $originAreaId],
+            $destination,
             [[
                 'name' => 'Produk',
                 'weight' => 1000,
@@ -58,8 +68,7 @@ class LPController extends Controller
 
         return response()->json(['couriers' => $couriers]);
     }
-
-    public function createOrder(Request $request, WhatsAppService $whatsapp)
+    public function createOrder(Request $request, WhatsAppService $whatsapp, BiteshipService $biteship)
     {
         $validated = $request->validate([
             'landing_page_id' => 'required|exists:landing_pages,id',
@@ -70,6 +79,7 @@ class LPController extends Controller
             'customer_city' => 'required|string|max:100',
             'customer_province' => 'required|string|max:100',
             'customer_postal_code' => 'required|string|max:10',
+            'destination_area_id' => 'nullable|string',
             'shipping_courier' => 'required|string|max:50',
             'shipping_service' => 'nullable|string|max:50',
             'shipping_cost' => 'nullable|numeric|min:0',
@@ -77,7 +87,7 @@ class LPController extends Controller
             'is_cod' => 'nullable|boolean',
         ]);
 
-        $landingPage = LandingPage::with('product')->findOrFail($validated['landing_page_id']);
+        $landingPage = LandingPage::with('product.warehouse')->findOrFail($validated['landing_page_id']);
 
         $variant = null;
         if ($landingPage->product->has_variants) {
@@ -89,35 +99,81 @@ class LPController extends Controller
         }
 
         $qty = $validated['qty'] ?? 1;
-        $shippingCost = $validated['shipping_cost'] ?? 0;
         $unitPrice = $variant ? $variant->sell_price : $landingPage->product->sell_price;
-        $totalAmount = ($unitPrice * $qty) + $shippingCost;
 
+        $originAreaId = $landingPage->product->warehouse->mengantar_area_id ?? config('services.biteship.origin_area_id', 'IDCGK101');
+        
+        $destination = [];
+        if (!empty($validated['destination_area_id'])) {
+            $destination['area_id'] = $validated['destination_area_id'];
+        } else {
+            $destination['city'] = $validated['customer_city'];
+        }
+        $destination['couriers'] = [strtolower($validated['shipping_courier'])];
+
+        $couriers = $biteship->getShippingRates(
+            ['area_id' => $originAreaId],
+            $destination,
+            [[
+                'name' => 'Produk',
+                'weight' => 1000,
+                'quantity' => $qty,
+                'value' => $unitPrice * $qty,
+            ]]
+        );
+
+        $verifiedShippingCost = null;
+        foreach ($couriers as $courier) {
+            if (strtolower($courier['code']) === strtolower($validated['shipping_courier'])) {
+                foreach ($courier['services'] as $service) {
+                    if (strtolower($service['name']) === strtolower($validated['shipping_service'] ?? 'reg')) {
+                        $verifiedShippingCost = $service['cost'];
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        if ($verifiedShippingCost === null) {
+            abort(400, 'Kurir atau layanan pengiriman tidak valid.');
+        }
+        $totalAmount = ($unitPrice * $qty) + $verifiedShippingCost;
         $isCod = $request->boolean('is_cod');
 
-        $order = Order::create([
-            'landing_page_id' => $landingPage->id,
-            'product_id' => $landingPage->product_id,
-            'product_variant_id' => $variant ? $variant->id : null,
-            'customer_name' => $validated['customer_name'],
-            'customer_phone' => $validated['customer_phone'],
-            'customer_address' => $validated['customer_address'],
-            'customer_city' => $validated['customer_city'],
-            'customer_province' => $validated['customer_province'],
-            'customer_postal_code' => $validated['customer_postal_code'],
-            'qty' => $qty,
-            'unit_price' => $unitPrice,
-            'shipping_courier' => $validated['shipping_courier'],
-            'shipping_service' => $validated['shipping_service'],
-            'shipping_cost' => $shippingCost,
-            'total_amount' => $totalAmount,
-            'payment_method' => $isCod ? 'cod' : null,
-            'is_cod' => $isCod,
-            'utm_source' => $request->input('utm_source'),
-            'utm_medium' => $request->input('utm_medium'),
-            'utm_campaign' => $request->input('utm_campaign'),
-            'utm_content' => $request->input('utm_content'),
-        ]);
+        $order = \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $landingPage, $variant, $qty, $unitPrice, $verifiedShippingCost, $totalAmount, $isCod, $request) {
+            if ($variant) {
+                $variant = \App\Models\ProductVariant::where('id', $variant->id)->lockForUpdate()->first();
+                if ($variant->stock < $qty) {
+                    abort(400, 'Stok tidak mencukupi');
+                }
+                $variant->decrement('stock', $qty);
+            }
+
+            return Order::create([
+                'landing_page_id' => $landingPage->id,
+                'product_id' => $landingPage->product_id,
+                'product_variant_id' => $variant ? $variant->id : null,
+                'customer_name' => $validated['customer_name'],
+                'customer_phone' => $validated['customer_phone'],
+                'customer_address' => $validated['customer_address'],
+                'customer_city' => $validated['customer_city'],
+                'customer_province' => $validated['customer_province'],
+                'customer_postal_code' => $validated['customer_postal_code'],
+                'customer_area_id' => $validated['destination_area_id'] ?? null,
+                'qty' => $qty,
+                'unit_price' => $unitPrice,
+                'shipping_courier' => $validated['shipping_courier'],
+                'shipping_service' => $validated['shipping_service'],
+                'shipping_cost' => $verifiedShippingCost,
+                'total_amount' => $totalAmount,
+                'payment_method' => $isCod ? 'cod' : null,
+                'is_cod' => $isCod,
+                'utm_source' => $request->input('utm_source'),
+                'utm_medium' => $request->input('utm_medium'),
+                'utm_campaign' => $request->input('utm_campaign'),
+                'utm_content' => $request->input('utm_content'),
+            ]);
+        });
 
         if ($isCod) {
             $whatsapp->sendOrderConfirmation($order, route('tracking.show', $order->order_number));

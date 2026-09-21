@@ -65,6 +65,8 @@ class OrderController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        $oldStatus = $order->order_status;
+
         $order->update([
             'order_status' => $request->order_status,
             'notes' => $request->notes ?: $order->notes,
@@ -72,6 +74,20 @@ class OrderController extends Controller
 
         if ($request->order_status === 'cancelled') {
             $order->update(['payment_status' => 'failed']);
+            
+            if ($oldStatus !== 'cancelled' && $order->product_variant_id) {
+                $variant = \App\Models\ProductVariant::find($order->product_variant_id);
+                if ($variant) {
+                    $variant->increment('stock', $order->qty);
+                }
+            }
+        } elseif ($oldStatus === 'cancelled' && $request->order_status !== 'cancelled') {
+            if ($order->product_variant_id) {
+                $variant = \App\Models\ProductVariant::find($order->product_variant_id);
+                if ($variant) {
+                    $variant->decrement('stock', $order->qty);
+                }
+            }
         }
 
         if ($request->order_status === 'delivered') {

@@ -64,7 +64,7 @@ class BiteshipService
         $result = $this->request('post', '/v1/rates/couriers', $payload);
 
         if (!$result || !isset($result['pricing'])) {
-            return $this->fallbackRates();
+            return [];
         }
 
         return $this->formatRates($result['pricing']);
@@ -75,8 +75,8 @@ class BiteshipService
         $payload = [
             'origin_contact_name' => config('app.name', 'Diginiaga'),
             'origin_contact_phone' => config('services.biteship.origin_phone', '08123456789'),
-            'origin_address' => config('services.biteship.origin_address', 'Jakarta'),
-            'origin_area_id' => config('services.biteship.origin_area_id', 'IDCGK101'),
+            'origin_address' => $order->product->warehouse->address ?? config('services.biteship.origin_address', 'Jakarta'),
+            'origin_area_id' => $order->product->warehouse->mengantar_area_id ?? config('services.biteship.origin_area_id', 'IDCGK101'),
             'destination_contact_name' => $order->customer_name,
             'destination_contact_phone' => $order->customer_phone,
             'destination_address' => $order->customer_address,

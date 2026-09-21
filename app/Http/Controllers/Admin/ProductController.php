@@ -37,6 +37,7 @@ class ProductController extends Controller
             'sell_price' => 'required|numeric|min:0',
             'cost_price' => 'required|numeric|min:0',
             'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
             'is_active' => 'boolean',
             'warehouse_id' => 'required|exists:warehouses,id',
         ]);
@@ -81,6 +82,7 @@ class ProductController extends Controller
             'sell_price' => 'required|numeric|min:0',
             'cost_price' => 'required|numeric|min:0',
             'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
             'is_active' => 'boolean',
             'warehouse_id' => 'required|exists:warehouses,id',
         ]);
