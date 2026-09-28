@@ -11,9 +11,10 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\LPController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TrackingController;
+use App\Http\Controllers\StorefrontController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => view('home'));
+Route::get('/', [StorefrontController::class, 'index'])->name('storefront.index');
 
 Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'))
     ->middleware(['auth'])
@@ -81,6 +82,7 @@ Route::get('/checkout/error', [CheckoutController::class, 'error'])->name('check
 Route::get('/checkout/pending', [CheckoutController::class, 'pending'])->name('checkout.pending');
 Route::get('/checkout/cod/{publicToken}', [CheckoutController::class, 'cod'])->name('checkout.cod')->middleware('throttle:20,1');
 
+Route::get('/track', [TrackingController::class, 'index'])->name('tracking.index');
 Route::get('/track/{publicToken}', [TrackingController::class, 'show'])->name('tracking.show')->middleware('throttle:20,1');
 Route::post('/track', [TrackingController::class, 'track'])->name('tracking.lookup')->middleware('throttle:5,1');
 

@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 
 class TrackingController extends Controller
 {
+    public function index()
+    {
+        return view('tracking.show');
+    }
+
     public function show(string $publicToken)
     {
         $order = Order::with(['product', 'shipment', 'landingPage'])

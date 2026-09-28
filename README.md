@@ -21,6 +21,10 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Storefront
+
+The root route is the customer storefront. It lists products that are active in the admin catalog and have an active landing page, so every visible product uses the existing landing-page and checkout flow. Customers can search the catalog, sort products, open product details, and track orders from `/track`.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
