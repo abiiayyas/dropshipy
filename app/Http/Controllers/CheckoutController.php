@@ -24,6 +24,7 @@ class CheckoutController extends Controller
         $landingPage = LandingPage::with(['product.options.optionValues', 'product.variants.optionValues'])
             ->where('slug', $slug)
             ->where('is_active', true)
+            ->whereHas('product', fn ($query) => $query->where('is_active', true))
             ->firstOrFail();
 
         $variant = null;
@@ -32,10 +33,10 @@ class CheckoutController extends Controller
             if (!$variantId) {
                 return redirect()->route('lp.show', $slug)->with('error', 'Silakan pilih varian produk terlebih dahulu.');
             }
-            $variant = \App\Models\ProductVariant::findOrFail($variantId);
-            if ($variant->product_id !== $landingPage->product_id) {
-                abort(400, 'Invalid variant');
-            }
+            $variant = $landingPage->product->variants()
+                ->whereKey($variantId)
+                ->where('is_active', true)
+                ->firstOrFail();
         }
 
         $utmParams = [
@@ -50,20 +51,28 @@ class CheckoutController extends Controller
         return view('checkout.form', compact('landingPage', 'utmQuery', 'variant'));
     }
 
-    public function payment(string $orderNumber)
+    public function payment(string $publicToken)
     {
         $order = Order::with(['product', 'landingPage', 'productVariant.optionValues'])
-            ->where('order_number', $orderNumber)
+            ->where('public_token', $publicToken)
             ->firstOrFail();
+
+        if ($order->is_cod) {
+            return redirect()->route('checkout.cod', ['publicToken' => $order->public_token]);
+        }
+
+        if ($order->order_status === 'cancelled') {
+            abort(410, 'Order sudah dibatalkan.');
+        }
 
         if ($order->payment_status === 'paid') {
             return redirect()->route('checkout.finish')
-                ->with('order_number', $order->order_number);
+                ->with('order_token', $order->public_token);
         }
 
         if (in_array($order->order_status, ['processing', 'shipped', 'delivered'])) {
             return redirect()->route('checkout.finish')
-                ->with('order_number', $order->order_number);
+                ->with('order_token', $order->public_token);
         }
 
         try {
@@ -80,13 +89,13 @@ class CheckoutController extends Controller
 
     public function finish(Request $request)
     {
-        $orderNumber = $request->session()->get('order_number')
-            ?? $request->query('order_id');
+        $publicToken = $request->session()->get('order_token')
+            ?? $request->query('order');
 
         $order = null;
-        if ($orderNumber) {
+        if ($publicToken) {
             $order = Order::with(['product', 'landingPage', 'productVariant.optionValues'])
-                ->where('order_number', $orderNumber)
+                ->where('public_token', $publicToken)
                 ->first();
         }
 
@@ -105,10 +114,10 @@ class CheckoutController extends Controller
         return view('checkout.pending');
     }
 
-    public function cod(string $orderNumber)
+    public function cod(string $publicToken)
     {
         $order = Order::with(['product', 'landingPage', 'productVariant.optionValues'])
-            ->where('order_number', $orderNumber)
+            ->where('public_token', $publicToken)
             ->firstOrFail();
 
         return view('checkout.cod', compact('order'));

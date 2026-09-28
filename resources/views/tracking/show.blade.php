@@ -76,6 +76,7 @@
             <form method="POST" action="{{ route('tracking.lookup') }}">
                 @csrf
                 <input type="text" name="order_number" placeholder="Masukkan nomor order..." required>
+                <input type="tel" name="customer_phone" placeholder="Masukkan nomor WhatsApp..." required>
                 <button type="submit">Cek Status</button>
             </form>
         </div>
@@ -91,6 +92,9 @@
                 @csrf
                 <div style="margin-bottom:12px">
                     <input type="text" name="order_number" placeholder="Masukkan nomor order Anda..." required style="width:100%;padding:12px 16px;border:1px solid #d1d5db;border-radius:10px;font-size:1rem;">
+                </div>
+                <div style="margin-bottom:12px">
+                    <input type="tel" name="customer_phone" placeholder="Masukkan nomor WhatsApp Anda..." required style="width:100%;padding:12px 16px;border:1px solid #d1d5db;border-radius:10px;font-size:1rem;">
                 </div>
                 <button type="submit" style="width:100%;padding:14px;background:#2563eb;color:white;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">Cek Status</button>
             </form>

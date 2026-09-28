@@ -44,7 +44,11 @@ class LPController extends Controller
             'landing_page_id' => 'required|exists:landing_pages,id',
         ]);
 
-        $landingPage = LandingPage::with('product.warehouse')->findOrFail($request->landing_page_id);
+        $landingPage = LandingPage::with('product.warehouse')
+            ->whereKey($request->landing_page_id)
+            ->where('is_active', true)
+            ->whereHas('product', fn ($query) => $query->where('is_active', true))
+            ->firstOrFail();
         $originAreaId = $landingPage->product->warehouse->mengantar_area_id ?? config('services.biteship.origin_area_id', 'IDCGK101');
 
         $destination = [];
@@ -87,15 +91,19 @@ class LPController extends Controller
             'is_cod' => 'nullable|boolean',
         ]);
 
-        $landingPage = LandingPage::with('product.warehouse')->findOrFail($validated['landing_page_id']);
+        $landingPage = LandingPage::with('product.warehouse')
+            ->whereKey($validated['landing_page_id'])
+            ->where('is_active', true)
+            ->whereHas('product', fn ($query) => $query->where('is_active', true))
+            ->firstOrFail();
 
         $variant = null;
         if ($landingPage->product->has_variants) {
             $request->validate(['product_variant_id' => 'required|exists:product_variants,id']);
-            $variant = \App\Models\ProductVariant::findOrFail($validated['product_variant_id']);
-            if ($variant->product_id !== $landingPage->product_id) {
-                abort(400, 'Invalid variant');
-            }
+            $variant = $landingPage->product->variants()
+                ->whereKey($validated['product_variant_id'])
+                ->where('is_active', true)
+                ->firstOrFail();
         }
 
         $qty = $validated['qty'] ?? 1;
@@ -142,7 +150,10 @@ class LPController extends Controller
 
         $order = \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $landingPage, $variant, $qty, $unitPrice, $verifiedShippingCost, $totalAmount, $isCod, $request) {
             if ($variant) {
-                $variant = \App\Models\ProductVariant::where('id', $variant->id)->lockForUpdate()->first();
+                $variant = \App\Models\ProductVariant::where('id', $variant->id)
+                    ->where('is_active', true)
+                    ->lockForUpdate()
+                    ->firstOrFail();
                 if ($variant->stock < $qty) {
                     abort(400, 'Stok tidak mencukupi');
                 }
@@ -167,6 +178,7 @@ class LPController extends Controller
                 'shipping_cost' => $verifiedShippingCost,
                 'total_amount' => $totalAmount,
                 'payment_method' => $isCod ? 'cod' : null,
+                'order_status' => $isCod ? 'processing' : 'pending_payment',
                 'is_cod' => $isCod,
                 'utm_source' => $request->input('utm_source'),
                 'utm_medium' => $request->input('utm_medium'),
@@ -176,13 +188,13 @@ class LPController extends Controller
         });
 
         if ($isCod) {
-            $whatsapp->sendOrderConfirmation($order, route('tracking.show', $order->order_number));
-            return redirect()->route('checkout.cod', ['order' => $order->order_number]);
+            $whatsapp->sendOrderConfirmation($order, route('tracking.show', ['publicToken' => $order->public_token]));
+            return redirect()->route('checkout.cod', ['publicToken' => $order->public_token]);
         }
 
-        $paymentUrl = route('checkout.payment', ['order' => $order->order_number]);
+        $paymentUrl = route('checkout.payment', ['publicToken' => $order->public_token]);
         $whatsapp->sendOrderConfirmation($order, $paymentUrl);
 
-        return redirect()->route('checkout.payment', ['order' => $order->order_number]);
+        return redirect()->route('checkout.payment', ['publicToken' => $order->public_token]);
     }
 }

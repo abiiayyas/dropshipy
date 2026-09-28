@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Illuminate\Validation\ValidationException;
+
 
 class LandingPageController extends Controller
 {
@@ -43,7 +45,7 @@ class LandingPageController extends Controller
             'testimonials' => 'nullable|string',
             'slider_images' => 'nullable|array',
             'slider_images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:4096',
-            'embed_code' => 'nullable|string',
+            'embed_code' => 'nullable|string|max:500',
             'cta_text' => 'nullable|string|max:100',
             'cta_color' => 'nullable|string|max:20',
             'button_text' => 'nullable|string|max:100',
@@ -56,6 +58,8 @@ class LandingPageController extends Controller
             'variant_name' => 'nullable|string|max:255',
             'template' => 'nullable|string|max:50',
         ]);
+
+        $validated['embed_code'] = $this->youtubeEmbedUrl($validated['embed_code'] ?? null);
 
         if ($request->hasFile('cover_image')) {
             $manager = new ImageManager(new Driver());
@@ -146,7 +150,7 @@ class LandingPageController extends Controller
             'testimonials' => 'nullable|string',
             'slider_images' => 'nullable|array',
             'slider_images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:4096',
-            'embed_code' => 'nullable|string',
+            'embed_code' => 'nullable|string|max:500',
             'cta_text' => 'nullable|string|max:100',
             'cta_color' => 'nullable|string|max:20',
             'button_text' => 'nullable|string|max:100',
@@ -159,6 +163,8 @@ class LandingPageController extends Controller
             'variant_name' => 'nullable|string|max:255',
             'template' => 'nullable|string|max:50',
         ]);
+
+        $validated['embed_code'] = $this->youtubeEmbedUrl($validated['embed_code'] ?? null);
 
         if ($request->hasFile('cover_image')) {
             if ($landingPage->cover_image) {
@@ -321,5 +327,36 @@ class LandingPageController extends Controller
         }
 
         return !empty($animations) ? json_encode($animations) : null;
+    }
+
+    private function youtubeEmbedUrl(?string $url): ?string
+    {
+        if (blank($url)) {
+            return null;
+        }
+
+        $parts = parse_url(trim($url));
+        $host = strtolower($parts['host'] ?? '');
+        $videoId = null;
+
+        if (in_array($host, ['youtu.be', 'www.youtu.be'], true)) {
+            $videoId = trim($parts['path'] ?? '', '/');
+        } elseif (in_array($host, ['youtube.com', 'www.youtube.com', 'm.youtube.com'], true)) {
+            $path = trim($parts['path'] ?? '', '/');
+            parse_str($parts['query'] ?? '', $query);
+            $videoId = $query['v'] ?? match (true) {
+                str_starts_with($path, 'embed/') => substr($path, strlen('embed/')),
+                str_starts_with($path, 'shorts/') => substr($path, strlen('shorts/')),
+                default => null,
+            };
+        }
+
+        if (!is_string($videoId) || !preg_match('/^[A-Za-z0-9_-]{11}$/', $videoId)) {
+            throw ValidationException::withMessages([
+                'embed_code' => 'Gunakan URL video YouTube yang valid.',
+            ]);
+        }
+
+        return 'https://www.youtube-nocookie.com/embed/' . $videoId;
     }
 }

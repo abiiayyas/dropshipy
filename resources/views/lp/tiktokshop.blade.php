@@ -242,7 +242,7 @@
             @endif
 
             {{-- Video Section --}}
-            @if($landingPage->embed_code)
+            @if($landingPage->youtube_embed_url)
             <div class="bg-[#1a1a1a] collapsible-section">
                 <button @click="openSection = openSection === 'video' ? '' : 'video'" class="w-full px-4 py-3 flex justify-between items-center text-left">
                     <span class="font-bold text-sm text-white">Video Produk</span>
@@ -251,13 +251,7 @@
                 <div class="content" :class="openSection === 'video' ? '!max-h-[2000px]' : ''">
                     <div class="px-4 pb-3">
                         <div class="embed-wrapper rounded-lg overflow-hidden">
-                            @php
-                            $code = $landingPage->embed_code;
-                            if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/', $code, $m)) {
-                                $code = '<iframe src="https://www.youtube.com/embed/' . $m[1] . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
-                            }
-                            @endphp
-                            {!! $code !!}
+                            <iframe src="{{ $landingPage->youtube_embed_url }}" title="Video Produk" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allowfullscreen></iframe>
                         </div>
                     </div>
                 </div>

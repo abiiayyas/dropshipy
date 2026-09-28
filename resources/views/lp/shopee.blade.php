@@ -222,16 +222,10 @@
             </div>
             @endif
 
-            @if($landingPage->embed_code)
+            @if($landingPage->youtube_embed_url)
             <div class="rounded-xl overflow-hidden mb-4 border border-gray-100">
                 <div class="embed-wrapper">
-                    @php
-                    $code = $landingPage->embed_code;
-                    if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/', $code, $m)) {
-                        $code = '<iframe src="https://www.youtube.com/embed/' . $m[1] . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
-                    }
-                    @endphp
-                    {!! $code !!}
+                    <iframe src="{{ $landingPage->youtube_embed_url }}" title="Video Produk" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allowfullscreen></iframe>
                 </div>
             </div>
             @endif

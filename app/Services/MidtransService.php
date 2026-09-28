@@ -13,12 +13,14 @@ class MidtransService
     protected string $clientKey;
     protected bool $isProduction;
     protected string $baseUrl;
+    protected OrderCancellationService $cancellation;
 
-    public function __construct()
+    public function __construct(OrderCancellationService $cancellation)
     {
         $this->serverKey = config('services.midtrans.server_key');
         $this->clientKey = config('services.midtrans.client_key');
         $this->isProduction = config('services.midtrans.is_production', false);
+        $this->cancellation = $cancellation;
         $this->baseUrl = $this->isProduction
             ? 'https://app.midtrans.com'
             : 'https://app.sandbox.midtrans.com';
@@ -118,6 +120,14 @@ class MidtransService
             throw new \RuntimeException('Order not found: ' . $orderNumber);
         }
 
+        if ((int) round((float) ($payload['gross_amount'] ?? 0)) !== $order->total_amount) {
+            Log::error('Midtrans webhook: gross amount mismatch', [
+                'order_number' => $order->order_number,
+                'gross_amount' => $payload['gross_amount'] ?? null,
+            ]);
+            throw new \RuntimeException('Invalid payment amount');
+        }
+
         $payment = Payment::where('order_id', $order->id)
             ->where('midtrans_transaction_id', $payload['transaction_id'] ?? null)
             ->first();
@@ -133,6 +143,17 @@ class MidtransService
         $newPaymentStatus = $this->mapPaymentStatus($transactionStatus, $fraudStatus);
 
         if ($newPaymentStatus === 'paid' && $order->payment_status !== 'paid') {
+            if ($order->order_status === 'cancelled') {
+                Log::warning('Midtrans webhook: payment received for cancelled order', [
+                    'order_number' => $order->order_number,
+                ]);
+
+                return [
+                    'order' => $order,
+                    'event' => 'payment_updated',
+                ];
+            }
+
             $order->update([
                 'payment_status' => 'paid',
                 'order_status' => 'paid',
@@ -149,17 +170,8 @@ class MidtransService
             ];
         }
 
-        if ($newPaymentStatus === 'expired') {
-            $order->update([
-                'payment_status' => 'expired',
-                'order_status' => 'cancelled',
-            ]);
-        }
-
-        if ($newPaymentStatus === 'failed') {
-            $order->update([
-                'payment_status' => 'failed',
-            ]);
+        if (in_array($newPaymentStatus, ['expired', 'failed'], true)) {
+            $order = $this->cancellation->cancel($order, $newPaymentStatus);
         }
 
         return [

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Order;
+use App\Services\OrderCancellationService;
 use App\Services\WhatsAppService;
 use Illuminate\Console\Command;
 
@@ -11,7 +12,7 @@ class SendPaymentReminders extends Command
     protected $signature = 'orders:send-payment-reminders';
     protected $description = 'Kirim reminder WA ke customer yang belum menyelesaikan pembayaran';
 
-    public function handle(WhatsAppService $whatsapp): void
+    public function handle(WhatsAppService $whatsapp, OrderCancellationService $cancellation): void
     {
         $this->info('Sending payment reminders...');
 
@@ -34,10 +35,7 @@ class SendPaymentReminders extends Command
             }
 
             if ($order->created_at->diffInHours(now()) > 24 && $order->reminder_count >= 1) {
-                $order->update([
-                    'order_status' => 'cancelled',
-                    'payment_status' => 'expired',
-                ]);
+                $cancellation->cancel($order, 'expired');
             }
         }
 
@@ -51,7 +49,7 @@ class SendPaymentReminders extends Command
             . "📦 *{$order->product->name}*\n"
             . "💰 Total: Rp " . number_format($order->total_amount, 0, ',', '.') . "\n\n"
             . "Silakan selesaikan pembayaran melalui link:\n"
-            . route('checkout.payment', ['order' => $order->order_number]) . "\n\n"
+            . route('checkout.payment', ['publicToken' => $order->public_token]) . "\n\n"
             . "Kalau ada kendala, hubungi kami ya. Terima kasih! 🙏";
     }
 }

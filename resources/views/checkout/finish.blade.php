@@ -49,7 +49,7 @@
         <h2>Pembayaran Berhasil!</h2>
         @if($order)
         <p>Order #{{ $order->order_number }} sedang diproses. Anda akan menerima notifikasi WhatsApp setelah order dikirim.</p>
-        <a href="{{ route('tracking.show', $order->order_number) }}" class="btn">Cek Status</a>
+        <a href="{{ route('tracking.show', $order->public_token) }}" class="btn">Cek Status</a>
         @else
         <p>Terima kasih! Order Anda sedang diproses.</p>
         @endif

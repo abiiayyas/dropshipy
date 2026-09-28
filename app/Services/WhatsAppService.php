@@ -75,7 +75,7 @@ class WhatsAppService
         $message = $this->renderTemplate($template, $order, [
             'courier_name' => $shipment->courier_name,
             'tracking_number' => $shipment->tracking_number,
-            'tracking_url' => config('app.url') . '/track/' . $order->order_number,
+            'tracking_url' => route('tracking.show', ['publicToken' => $order->public_token]),
         ]);
 
         $this->logAndSend($order, 'resi_generated', $order->customer_phone, $message);

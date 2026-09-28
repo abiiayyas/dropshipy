@@ -163,6 +163,12 @@ class BiteshipService
         $order = $shipment->order;
         if (!$order) return;
 
+        if ($shipment->status === 'cancelled') {
+            app(OrderCancellationService::class)->cancel($order, $order->payment_status);
+
+            return;
+        }
+
         $statusMap = [
             'confirmed' => 'shipped',
             'allocated' => 'shipped',
@@ -171,7 +177,6 @@ class BiteshipService
             'dropping_off' => 'shipped',
             'in_transit' => 'shipped',
             'delivered' => 'delivered',
-            'cancelled' => 'cancelled',
         ];
 
         $newOrderStatus = $statusMap[$shipment->status] ?? null;

@@ -202,9 +202,9 @@
             {{-- Embed / YouTube --}}
             <div x-show="activeSections.embed" class="p-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl relative shadow-sm" style="display: none;">
                 <button type="button" @click="activeSections.embed = false" class="absolute top-4 right-4 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-400">✕</button>
-                <h3 class="font-semibold text-gray-800 dark:text-slate-200 mb-4">Video Embed</h3>
-                <textarea name="embed_code" rows="3" x-model="embed_code" class="py-2 px-3 block w-full border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="<iframe width='560' height='315' src='https://www.youtube.com/embed/...'></iframe>"></textarea>
-                <p class="text-xs text-gray-400 dark:text-slate-500 mt-2">Tempel kode embed HTML penuh dari platform video.</p>
+                <h3 class="font-semibold text-gray-800 dark:text-slate-200 mb-4">Video YouTube</h3>
+                <textarea name="embed_code" rows="3" x-model="embed_code" class="py-2 px-3 block w-full border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="https://www.youtube.com/watch?v=..."></textarea>
+                <p class="text-xs text-gray-400 dark:text-slate-500 mt-2">Masukkan URL YouTube. Kode HTML dan provider lain tidak didukung.</p>
             </div>
 
             {{-- FAQ --}}

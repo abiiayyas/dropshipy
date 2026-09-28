@@ -54,7 +54,7 @@
     payButton.addEventListener('click', function () {
         snap.pay('{{ $snapToken }}', {
             onSuccess: function(result) {
-                window.location.href = '{{ route('checkout.finish') }}?order_id={{ $order->order_number }}';
+                window.location.href = '{{ route('checkout.finish') }}?order={{ $order->public_token }}';
             },
             onPending: function(result) {
                 window.location.href = '{{ route('checkout.pending') }}';
@@ -63,7 +63,7 @@
                 window.location.href = '{{ route('checkout.error') }}';
             },
             onClose: function() {
-                window.location.href = '{{ route('tracking.show', $order->order_number) }}';
+                window.location.href = '{{ route('tracking.show', $order->public_token) }}';
             }
         });
     });

@@ -160,6 +160,7 @@ class MengantarService
             ->get();
 
         $whatsapp = app(WhatsAppService::class);
+        $cancellation = app(OrderCancellationService::class);
 
         foreach ($shipments as $shipment) {
             try {
@@ -184,6 +185,10 @@ class MengantarService
                             }
                         } else {
                             $shipment->save();
+
+                            if ($status === 'cancelled' && $shipment->order) {
+                                $cancellation->cancel($shipment->order, $shipment->order->payment_status);
+                            }
                         }
                     }
                 }

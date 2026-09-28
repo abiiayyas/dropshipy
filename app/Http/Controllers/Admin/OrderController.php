@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\MengantarService;
+use App\Services\OrderCancellationService;
+
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 
@@ -58,7 +60,7 @@ class OrderController extends Controller
         return view('admin.orders.show', compact('order'));
     }
 
-    public function updateStatus(Request $request, Order $order, WhatsAppService $whatsapp)
+    public function updateStatus(Request $request, Order $order, WhatsAppService $whatsapp, OrderCancellationService $cancellation)
     {
         $request->validate([
             'order_status' => 'required|in:paid,processing,shipped,delivered,cancelled',
@@ -67,27 +69,20 @@ class OrderController extends Controller
 
         $oldStatus = $order->order_status;
 
-        $order->update([
-            'order_status' => $request->order_status,
-            'notes' => $request->notes ?: $order->notes,
-        ]);
+        if ($oldStatus === 'cancelled' && $request->order_status !== 'cancelled') {
+            return back()->with('error', 'Order yang dibatalkan tidak dapat diaktifkan kembali.');
+        }
 
         if ($request->order_status === 'cancelled') {
-            $order->update(['payment_status' => 'failed']);
-            
-            if ($oldStatus !== 'cancelled' && $order->product_variant_id) {
-                $variant = \App\Models\ProductVariant::find($order->product_variant_id);
-                if ($variant) {
-                    $variant->increment('stock', $order->qty);
-                }
-            }
-        } elseif ($oldStatus === 'cancelled' && $request->order_status !== 'cancelled') {
-            if ($order->product_variant_id) {
-                $variant = \App\Models\ProductVariant::find($order->product_variant_id);
-                if ($variant) {
-                    $variant->decrement('stock', $order->qty);
-                }
-            }
+            $order = $cancellation->cancel($order, 'failed');
+            $order->update([
+                'notes' => $request->notes ?: $order->notes,
+            ]);
+        } else {
+            $order->update([
+                'order_status' => $request->order_status,
+                'notes' => $request->notes ?: $order->notes,
+            ]);
         }
 
         if ($request->order_status === 'delivered') {
@@ -181,8 +176,15 @@ class OrderController extends Controller
     public function supplierQueue()
     {
         $orders = Order::with(['product', 'landingPage'])
-            ->where('payment_status', 'paid')
-            ->where('order_status', 'paid')
+            ->where(function ($query) {
+                $query->where(function ($query) {
+                    $query->where('payment_status', 'paid')
+                        ->where('order_status', 'paid');
+                })->orWhere(function ($query) {
+                    $query->where('is_cod', true)
+                        ->where('order_status', 'processing');
+                });
+            })
             ->where(function ($q) {
                 $q->whereNull('supplier_order_status')
                   ->orWhere('supplier_order_status', 'pending');

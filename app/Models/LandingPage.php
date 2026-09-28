@@ -38,6 +38,23 @@ class LandingPage extends Model
         'visits' => 'integer',
     ];
 
+    public function getYoutubeEmbedUrlAttribute(): ?string
+    {
+        $parts = parse_url($this->embed_code ?? '');
+        $host = strtolower($parts['host'] ?? '');
+        $path = trim($parts['path'] ?? '', '/');
+
+        if ($host !== 'www.youtube-nocookie.com' || !str_starts_with($path, 'embed/')) {
+            return null;
+        }
+
+        $videoId = substr($path, strlen('embed/'));
+
+        return preg_match('/^[A-Za-z0-9_-]{11}$/', $videoId)
+            ? 'https://www.youtube-nocookie.com/embed/' . $videoId
+            : null;
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);

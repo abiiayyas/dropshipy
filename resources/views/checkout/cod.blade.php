@@ -62,7 +62,7 @@
             <div class="detail-row total"><span>Total</span><span>Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span></div>
         </div>
 
-        <a href="{{ route('tracking.show', $order->order_number) }}" class="btn">Cek Status Order</a>
+        <a href="{{ route('tracking.show', $order->public_token) }}" class="btn">Cek Status Order</a>
 
         <div class="note">
             Tim kami akan segera memproses order Anda. Notifikasi akan dikirim via WhatsApp ke {{ $order->customer_phone }}.

@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+
 
 class Order extends Model
 {
     protected $fillable = [
         'order_number',
+        'public_token',
         'landing_page_id',
         'product_id',
         'product_variant_id',
@@ -51,7 +54,11 @@ class Order extends Model
     {
         static::creating(function (Order $order) {
             if (empty($order->order_number)) {
-                $order->order_number = 'ORD-' . now()->format('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+                $order->order_number = 'ORD-' . now()->format('Ymd') . '-' . Str::upper(Str::random(12));
+            }
+
+            if (empty($order->public_token)) {
+                $order->public_token = Str::random(48);
             }
         });
     }

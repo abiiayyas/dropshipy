@@ -23,6 +23,16 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('admin')->name('admin
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
 
+    Route::get('orders/supplier-queue', [OrderController::class, 'supplierQueue'])->name('orders.supplier-queue');
+    Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::patch('orders/{order}/tracking', [OrderController::class, 'updateTracking'])->name('orders.update-tracking');
+    Route::patch('orders/{order}/supplier-ordered', [OrderController::class, 'markSupplierOrdered'])->name('orders.supplier-ordered');
+    Route::post('orders/{order}/mengantar', [OrderController::class, 'createMengantarShipment'])->name('orders.mengantar');
+    Route::get('orders/{order}/copy-supplier-data', [OrderController::class, 'copySupplierData'])->name('orders.copy-supplier-data');
+    Route::resource('orders', OrderController::class)->only(['index', 'show']);
+});
+
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('products', ProductController::class)->except(['show']);
 
     Route::get('landing-pages/{landingPage}/toggle', [LandingPageController::class, 'toggle'])
@@ -32,13 +42,6 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('admin')->name('admin
     Route::resource('landing-pages', LandingPageController::class)->except(['show']);
 
     Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
-    Route::get('orders/supplier-queue', [OrderController::class, 'supplierQueue'])->name('orders.supplier-queue');
-    Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
-    Route::patch('orders/{order}/tracking', [OrderController::class, 'updateTracking'])->name('orders.update-tracking');
-    Route::patch('orders/{order}/supplier-ordered', [OrderController::class, 'markSupplierOrdered'])->name('orders.supplier-ordered');
-    Route::post('orders/{order}/mengantar', [OrderController::class, 'createMengantarShipment'])->name('orders.mengantar');
-    Route::get('orders/{order}/copy-supplier-data', [OrderController::class, 'copySupplierData'])->name('orders.copy-supplier-data');
-    Route::resource('orders', OrderController::class)->except(['create', 'store', 'edit', 'destroy']);
 
     Route::get('notification-templates', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'index'])
         ->name('notification-templates');
@@ -72,14 +75,14 @@ Route::get('/lp/search-area', [LPController::class, 'searchArea'])->name('lp.sea
 Route::get('/lp/shipping-options', [LPController::class, 'getShippingOptions'])->name('lp.shipping');
 
 Route::get('/checkout/form/{slug}', [CheckoutController::class, 'showForm'])->name('checkout.form');
-Route::get('/checkout/{order}', [CheckoutController::class, 'payment'])->name('checkout.payment');
-Route::get('/checkout/finish', [CheckoutController::class, 'finish'])->name('checkout.finish');
+Route::get('/checkout/{publicToken}', [CheckoutController::class, 'payment'])->name('checkout.payment')->middleware('throttle:20,1');
+Route::get('/checkout/finish', [CheckoutController::class, 'finish'])->name('checkout.finish')->middleware('throttle:20,1');
 Route::get('/checkout/error', [CheckoutController::class, 'error'])->name('checkout.error');
 Route::get('/checkout/pending', [CheckoutController::class, 'pending'])->name('checkout.pending');
-Route::get('/checkout/cod/{order}', [CheckoutController::class, 'cod'])->name('checkout.cod');
+Route::get('/checkout/cod/{publicToken}', [CheckoutController::class, 'cod'])->name('checkout.cod')->middleware('throttle:20,1');
 
-Route::get('/track/{orderNumber}', [TrackingController::class, 'show'])->name('tracking.show');
-Route::post('/track', [TrackingController::class, 'track'])->name('tracking.lookup');
+Route::get('/track/{publicToken}', [TrackingController::class, 'show'])->name('tracking.show')->middleware('throttle:20,1');
+Route::post('/track', [TrackingController::class, 'track'])->name('tracking.lookup')->middleware('throttle:5,1');
 
 Route::post('/webhook/midtrans', [\App\Http\Controllers\PaymentWebhookController::class, 'handle'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
