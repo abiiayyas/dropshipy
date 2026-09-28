@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 class Order extends Model
 {
     protected $fillable = [
+        'user_id',
         'order_number',
         'public_token',
         'landing_page_id',
@@ -61,6 +62,11 @@ class Order extends Model
                 $order->public_token = Str::random(48);
             }
         });
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function landingPage()

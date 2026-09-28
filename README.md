@@ -25,6 +25,8 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
 
 The root route is the customer storefront. It lists products that are active in the admin catalog and have an active landing page, so every visible product uses the existing landing-page and checkout flow. Customers can search the catalog, sort products, open product details, and track orders from `/track`.
 
+Buyer accounts are optional. Guests can still checkout and track an order with an order number or shipment tracking number plus the checkout phone. Registered buyers use `/account` to view owned orders and can claim an older guest order after WhatsApp code verification.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.

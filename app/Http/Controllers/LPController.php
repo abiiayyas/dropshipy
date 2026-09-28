@@ -146,8 +146,9 @@ class LPController extends Controller
         }
         $totalAmount = ($unitPrice * $qty) + $verifiedShippingCost;
         $isCod = $request->boolean('is_cod');
+        $customerId = auth()->user()?->isCustomer() ? auth()->id() : null;
 
-        $order = \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $landingPage, $variant, $qty, $unitPrice, $verifiedShippingCost, $totalAmount, $isCod, $request) {
+        $order = \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $landingPage, $variant, $qty, $unitPrice, $verifiedShippingCost, $totalAmount, $isCod, $request, $customerId) {
             if ($variant) {
                 $variant = \App\Models\ProductVariant::where('id', $variant->id)
                     ->where('is_active', true)
@@ -160,6 +161,7 @@ class LPController extends Controller
             }
 
             return Order::create([
+                'user_id' => $customerId,
                 'landing_page_id' => $landingPage->id,
                 'product_id' => $landingPage->product_id,
                 'product_variant_id' => $variant ? $variant->id : null,

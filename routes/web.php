@@ -12,11 +12,15 @@ use App\Http\Controllers\LPController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\StorefrontController;
+use App\Http\Controllers\CustomerAccountController;
+use App\Http\Controllers\CustomerRegistrationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [StorefrontController::class, 'index'])->name('storefront.index');
 
-Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'))
+Route::get('/dashboard', fn () => auth()->user()->isCustomer()
+    ? redirect()->route('account.dashboard')
+    : redirect()->route('admin.dashboard'))
     ->middleware(['auth'])
     ->name('dashboard');
 
@@ -67,6 +71,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::middleware('guest')->prefix('account')->name('account.')->group(function () {
+    Route::get('/register', [CustomerRegistrationController::class, 'create'])->name('register');
+    Route::post('/register', [CustomerRegistrationController::class, 'store'])->name('register.store');
+});
+
+Route::middleware(['auth', 'customer'])->prefix('account')->name('account.')->group(function () {
+    Route::get('/', [CustomerAccountController::class, 'index'])->name('dashboard');
+    Route::get('/orders/claim', [CustomerAccountController::class, 'claimForm'])->name('orders.claim.form');
+    Route::post('/orders/claim', [CustomerAccountController::class, 'requestClaim'])->name('orders.claim.store')->middleware('throttle:5,1');
+    Route::get('/orders/claim/verify', [CustomerAccountController::class, 'verifyClaimForm'])->name('orders.claim.verify.form');
+    Route::post('/orders/claim/verify', [CustomerAccountController::class, 'verifyClaim'])->name('orders.claim.verify')->middleware('throttle:10,10');
+    Route::get('/orders/{order}', [CustomerAccountController::class, 'showOrder'])->whereNumber('order')->name('orders.show');
 });
 
 Route::get('/p/{slug}', [LPController::class, 'show'])->name('lp.show');

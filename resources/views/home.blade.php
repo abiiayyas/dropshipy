@@ -11,7 +11,7 @@
     <style>
         :root { color-scheme: light; }
         html { scroll-behavior: smooth; }
-        body { background: #f7f9fc; }
+        [x-cloak] { display: none !important; }
         .store-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
         .product-card { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
         .product-card:hover { transform: translateY(-3px); box-shadow: 0 18px 40px rgba(25, 71, 128, .11); border-color: #cbdcf4; }
@@ -27,26 +27,62 @@
 <body class="text-slate-900 antialiased">
     <a href="#produk" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-slate-950 focus:px-4 focus:py-2 focus:text-sm focus:text-white">Lewati ke produk</a>
 
-    <header class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
-        <div class="mx-auto flex h-16 max-w-7xl items-center gap-5 px-4 sm:px-6 lg:px-8">
-            <a href="{{ route('storefront.index') }}" class="flex shrink-0 items-center gap-2.5" aria-label="{{ $storeName }} beranda">
+    <header x-data="{ mobileOpen: false }" @keydown.escape.window="mobileOpen = false" @click.outside="mobileOpen = false" class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
+        <div class="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center gap-4 px-4 py-3 sm:px-6 md:grid md:h-16 md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-8 md:py-0 lg:px-8">
+            <a href="{{ route('storefront.index') }}" class="order-1 flex shrink-0 items-center gap-2.5 md:col-start-1" aria-label="{{ $storeName }} beranda">
                 <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-base font-black text-white">{{ strtoupper(substr($storeName, 0, 1)) }}</span>
                 <span class="text-lg font-bold tracking-tight text-slate-950">{{ $storeName }}</span>
             </a>
 
-            <form action="{{ route('storefront.index') }}" method="GET" class="order-3 flex w-full items-center md:order-2 md:max-w-xl" role="search">
+            <button type="button" class="order-2 ml-auto inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition hover:border-blue-300 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 md:hidden" @click="mobileOpen = !mobileOpen" :aria-expanded="mobileOpen.toString()" aria-controls="mobile-store-navigation" aria-label="Buka menu navigasi">
+                <span class="flex w-5 flex-col gap-1.5" aria-hidden="true">
+                    <span class="h-0.5 w-full rounded-full bg-current"></span>
+                    <span class="h-0.5 w-full rounded-full bg-current"></span>
+                    <span class="h-0.5 w-full rounded-full bg-current"></span>
+                </span>
+            </button>
+
+            <form action="{{ route('storefront.index') }}" method="GET" class="order-3 flex w-full basis-full items-center md:order-2 md:col-start-2 md:basis-auto md:justify-self-center md:max-w-2xl" role="search">
                 <label for="store-search" class="sr-only">Cari produk</label>
                 <div class="relative w-full">
                     <input id="store-search" type="search" name="q" value="{{ $search }}" placeholder="Cari produk yang kamu butuhkan" class="h-10 w-full rounded-xl border-slate-200 bg-slate-50 px-4 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-blue-500">
                 </div>
             </form>
 
-            <nav class="order-2 ml-auto hidden items-center gap-5 text-sm font-medium text-slate-600 md:order-3 md:flex" aria-label="Navigasi utama">
+            <nav class="order-2 ml-auto hidden items-center gap-5 text-sm font-medium text-slate-600 md:order-3 md:col-start-3 md:ml-0 md:justify-self-end md:flex" aria-label="Navigasi utama">
                 <a href="#produk" class="transition hover:text-blue-600">Produk</a>
                 <a href="#bantuan" class="transition hover:text-blue-600">Bantuan</a>
                 <a href="{{ route('tracking.index') }}" class="transition hover:text-blue-600">Lacak pesanan</a>
+                @auth
+                    @if(auth()->user()->isCustomer())
+                        <a href="{{ route('account.dashboard') }}" class="font-semibold text-blue-700 transition hover:text-blue-900">Akun saya</a>
+                    @else
+                        <a href="{{ route('dashboard') }}" class="transition hover:text-blue-600">Panel staf</a>
+                    @endif
+                @else
+                    <a href="{{ route('login') }}" class="transition hover:text-blue-600">Masuk</a>
+                    <a href="{{ route('account.register') }}" class="font-semibold text-blue-700 transition hover:text-blue-900">Daftar akun</a>
+                @endauth
             </nav>
         </div>
+
+        <nav id="mobile-store-navigation" x-cloak x-show="mobileOpen" x-transition class="border-t border-slate-200 bg-white px-4 py-3 md:hidden" aria-label="Navigasi mobile">
+            <div class="mx-auto flex max-w-7xl flex-col gap-1 text-sm font-medium text-slate-700">
+                <a href="#produk" @click="mobileOpen = false" class="rounded-lg px-3 py-3 hover:bg-slate-50 hover:text-blue-700">Produk</a>
+                <a href="#bantuan" @click="mobileOpen = false" class="rounded-lg px-3 py-3 hover:bg-slate-50 hover:text-blue-700">Bantuan</a>
+                <a href="{{ route('tracking.index') }}" class="rounded-lg px-3 py-3 hover:bg-slate-50 hover:text-blue-700">Lacak pesanan</a>
+                @auth
+                    @if(auth()->user()->isCustomer())
+                        <a href="{{ route('account.dashboard') }}" class="rounded-lg px-3 py-3 font-semibold text-blue-700 hover:bg-blue-50">Akun saya</a>
+                    @else
+                        <a href="{{ route('dashboard') }}" class="rounded-lg px-3 py-3 hover:bg-slate-50 hover:text-blue-700">Panel staf</a>
+                    @endif
+                @else
+                    <a href="{{ route('login') }}" class="rounded-lg px-3 py-3 hover:bg-slate-50 hover:text-blue-700">Masuk</a>
+                    <a href="{{ route('account.register') }}" class="rounded-lg px-3 py-3 font-semibold text-blue-700 hover:bg-blue-50">Daftar akun</a>
+                @endauth
+            </div>
+        </nav>
     </header>
 
     <main>

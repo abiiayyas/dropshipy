@@ -13,6 +13,9 @@ class CheckRole
         if (! $request->user()) {
             return redirect()->route('login');
         }
+        if ($request->user()->isCustomer()) {
+            abort(403, 'Unauthorized');
+        }
 
         if (in_array($request->user()->role, $roles)) {
             return $next($request);

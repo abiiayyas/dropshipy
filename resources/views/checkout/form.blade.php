@@ -98,11 +98,11 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">Nama Lengkap</label>
-                                <input type="text" name="customer_name" required placeholder="Nama Anda" class="w-full text-sm py-2 px-3 border border-gray-200 rounded-lg focus:border-brand focus:ring focus:ring-brand focus:ring-opacity-20 outline-none transition-all">
+                                <input type="text" name="customer_name" value="{{ old('customer_name', auth()->user()?->isCustomer() ? auth()->user()->name : '') }}" required placeholder="Nama Anda" class="w-full text-sm py-2 px-3 border border-gray-200 rounded-lg focus:border-brand focus:ring focus:ring-brand focus:ring-opacity-20 outline-none transition-all">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">No. WhatsApp</label>
-                                <input type="tel" name="customer_phone" required placeholder="0812..." class="w-full text-sm py-2 px-3 border border-gray-200 rounded-lg focus:border-brand focus:ring focus:ring-brand focus:ring-opacity-20 outline-none transition-all">
+                                <input type="tel" name="customer_phone" value="{{ old('customer_phone', auth()->user()?->isCustomer() ? auth()->user()->phone : '') }}" required placeholder="0812..." class="w-full text-sm py-2 px-3 border border-gray-200 rounded-lg focus:border-brand focus:ring focus:ring-brand focus:ring-opacity-20 outline-none transition-all">
                             </div>
                         </div>
                         <div>

@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use Illuminate\Http\Request;
+use App\Support\PhoneNumber;
 
+use Illuminate\Http\Request;
 class TrackingController extends Controller
 {
     public function index()
@@ -30,29 +31,29 @@ class TrackingController extends Controller
     public function track(Request $request)
     {
         $validated = $request->validate([
-            'order_number' => 'required|string|max:50',
-            'customer_phone' => 'required|string|max:20',
+            'order_reference' => ['nullable', 'string', 'max:100', 'required_without:order_number'],
+            'order_number' => ['nullable', 'string', 'max:100'],
+            'customer_phone' => ['required', 'string', 'max:20'],
         ]);
 
+        $reference = trim($validated['order_reference'] ?? $validated['order_number'] ?? '');
         $order = Order::with(['product', 'shipment'])
-            ->where('order_number', $validated['order_number'])
+            ->where(function ($query) use ($reference): void {
+                $query->where('order_number', $reference)
+                    ->orWhereHas('shipment', fn ($shipments) => $shipments->where('tracking_number', $reference));
+            })
             ->first();
 
-        if (! $order || ! hash_equals($this->normalizePhone($order->customer_phone), $this->normalizePhone($validated['customer_phone']))) {
-            return back()->with('error', 'Order tidak ditemukan. Periksa kembali data Anda.');
+        if (! $order || ! hash_equals(PhoneNumber::normalize($order->customer_phone), PhoneNumber::normalize($validated['customer_phone']))) {
+            return back()->with('error', 'Order tidak ditemukan. Periksa kembali nomor order atau resi dan nomor WhatsApp Anda.');
         }
 
         $trackingData = null;
-        if ($order && $order->shipment) {
+        if ($order->shipment) {
             $mengantar = app(\App\Services\MengantarService::class);
             $trackingData = $mengantar->getTracking($order->shipment->tracking_number);
         }
 
         return view('tracking.show', compact('order', 'trackingData'));
-    }
-
-    private function normalizePhone(string $phone): string
-    {
-        return preg_replace('/\\D+/', '', $phone);
     }
 }
