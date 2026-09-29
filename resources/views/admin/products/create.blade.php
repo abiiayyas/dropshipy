@@ -22,6 +22,16 @@
             </select>
             @error('warehouse_id')<p class="text-red-500 text-xs mt-1">{{$message}}</p>@enderror
         </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Kurir Mengantar yang Diizinkan</label>
+            <input type="text" name="allowed_couriers" value="{{ old('allowed_couriers') }}"
+                placeholder="Contoh: jne,jnt"
+                class="py-2 px-3 block w-full border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500">
+            <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                Isi dengan kode kurir yang dikembalikan Mengantar, pisahkan dengan koma. Kosongkan untuk semua kurir.
+            </p>
+            @error('allowed_couriers')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+        </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
             <div><label class="block text-sm font-medium mb-2">Harga Jual (Rp)</label><input type="number" name="sell_price" value="{{ old('sell_price') }}" required class="py-2 px-3 block w-full border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"></div>
             <div><label class="block text-sm font-medium mb-2">Harga Modal (Rp)</label><input type="number" name="cost_price" value="{{ old('cost_price') }}" required class="py-2 px-3 block w-full border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"></div>

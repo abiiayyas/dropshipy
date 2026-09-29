@@ -64,7 +64,8 @@ class LPController extends Controller
                 'weight' => 1000,
                 'quantity' => 1,
                 'value' => $landingPage->product->sell_price,
-            ]]
+            ]],
+            $landingPage->product->allowed_couriers
         );
 
         return response()->json(['couriers' => $couriers]);
@@ -130,7 +131,8 @@ class LPController extends Controller
                 'weight' => 1000,
                 'quantity' => $qty,
                 'value' => $unitPrice * $qty,
-            ]]
+            ]],
+            $landingPage->product->allowed_couriers
         );
 
         $verifiedShippingCost = null;

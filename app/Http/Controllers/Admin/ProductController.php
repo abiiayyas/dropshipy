@@ -36,9 +36,13 @@ class ProductController extends Controller
             'cost_price' => 'required|numeric|min:0',
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'allowed_couriers' => 'nullable|string|max:500',
             'is_active' => 'boolean',
             'warehouse_id' => 'required|exists:warehouses,id',
         ]);
+        $validated['allowed_couriers'] = $this->normalizeAllowedCouriers(
+            $request->input('allowed_couriers')
+        );
 
         if ($request->hasFile('images')) {
             $paths = [];
@@ -75,9 +79,13 @@ class ProductController extends Controller
             'cost_price' => 'required|numeric|min:0',
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'allowed_couriers' => 'nullable|string|max:500',
             'is_active' => 'boolean',
             'warehouse_id' => 'required|exists:warehouses,id',
         ]);
+        $validated['allowed_couriers'] = $this->normalizeAllowedCouriers(
+            $request->input('allowed_couriers')
+        );
 
         if ($request->hasFile('images')) {
             $paths = $product->images ?? [];
@@ -158,6 +166,18 @@ class ProductController extends Controller
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Produk berhasil diperbarui.');
+    }
+
+    private function normalizeAllowedCouriers(?string $couriers): array
+    {
+        if (blank($couriers)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            static fn (string $courier) => strtolower(trim($courier)),
+            explode(',', $couriers)
+        ))));
     }
 
     public function destroy(Product $product)

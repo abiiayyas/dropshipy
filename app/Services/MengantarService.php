@@ -56,7 +56,12 @@ class MengantarService
         return $response->json();
     }
 
-    public function getShippingRates(array $origin, array $destination, array $items): array
+    public function getShippingRates(
+        array $origin,
+        array $destination,
+        array $items,
+        ?array $allowedCouriers = null
+    ): array
     {
         if (empty($origin['area_id']) || empty($destination['area_id'])) {
             return [];
@@ -73,7 +78,7 @@ class MengantarService
             'destination_id' => $destination['area_id'],
             'courier' => 'all',
             'weight' => $totalWeightKg,
-            'COD_AMOUNT' => $totalValue, 
+            'COD_AMOUNT' => $totalValue,
         ];
 
         $result = $this->request('GET', 'order/estimate', $payload);
@@ -82,7 +87,24 @@ class MengantarService
             return [];
         }
 
-        return $this->formatRates($result['data']);
+        return $this->filterCouriers($this->formatRates($result['data']), $allowedCouriers);
+    }
+
+    public function filterCouriers(array $couriers, ?array $allowedCouriers): array
+    {
+        if (empty($allowedCouriers)) {
+            return $couriers;
+        }
+
+        $allowed = array_fill_keys(
+            array_map(fn (string $code) => $this->normalizeCourierCode($code), $allowedCouriers),
+            true
+        );
+
+        return array_values(array_filter(
+            $couriers,
+            fn (array $courier) => isset($allowed[$this->normalizeCourierCode($courier['code'] ?? '')])
+        ));
     }
 
     public function createShipment(Order $order): ?array
@@ -200,6 +222,10 @@ class MengantarService
         }
     }
 
+    private function normalizeCourierCode(string $code): string
+    {
+        return strtolower(preg_replace('/[^a-z0-9]/i', '', $code));
+    }
     protected function formatRates(array $pricing): array
     {
         $grouped = [];

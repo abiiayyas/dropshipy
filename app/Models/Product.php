@@ -13,6 +13,7 @@ class Product extends Model
         'sell_price',
         'cost_price',
         'images',
+        'allowed_couriers',
         'is_active',
         'has_variants',
         'warehouse_id',
@@ -20,6 +21,7 @@ class Product extends Model
 
     protected $casts = [
         'images' => 'array',
+        'allowed_couriers' => 'array',
         'sell_price' => 'integer',
         'cost_price' => 'integer',
         'is_active' => 'boolean',

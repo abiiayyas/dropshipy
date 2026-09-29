@@ -27,7 +27,7 @@ The root route is the customer storefront. It lists products that are active in 
 
 Buyer accounts are optional. Guests can still checkout and track an order with an order number or shipment tracking number plus the checkout phone. Registered buyers use `/account` to view owned orders and can claim an older guest order after WhatsApp code verification.
 
-Shipping rates and destination-area search use Mengantar. Configure `MENGANTAR_API_KEY` and `MENGANTAR_BASE_URL`, then set each warehouse's Mengantar area in Admin > Warehouses. If a product warehouse has no area, set the shared `MENGANTAR_ORIGIN_AREA_ID`; checkout reports the missing origin configuration instead of silently returning an empty courier list.
+Shipping rates and destination-area search use Mengantar. Configure `MENGANTAR_API_KEY` and `MENGANTAR_BASE_URL`, then set each warehouse's Mengantar area in Admin > Warehouses. If a product warehouse has no area, set the shared `MENGANTAR_ORIGIN_AREA_ID`; checkout reports the missing origin configuration instead of silently returning an empty courier list. Product restrictions accept the courier codes returned by Mengantar (for example `jne,jnt`); an empty restriction keeps all returned couriers.
 
 Image uploads accept JPEG, PNG, GIF, and WebP. The deployment must keep `public/storage` linked to `storage/app/public`; `deploy.sh` runs `php artisan storage:link` automatically. The application optimizes images to WebP when PHP GD supports WebP encoding; otherwise it stores the validated original file instead of failing the request.
 
