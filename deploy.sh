@@ -61,6 +61,9 @@ npm run build
 echo "🗄️ Menjalankan migrasi database..."
 php artisan migrate --force
 
+echo "🔗 Memastikan link storage publik tersedia..."
+php artisan storage:link
+
 # 6. Optimize & Cache
 echo "🧹 Membersihkan dan membuat ulang cache..."
 php artisan optimize:clear

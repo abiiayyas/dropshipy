@@ -88,6 +88,27 @@ class StorefrontTest extends TestCase
     }
 
 
+    public function test_storefront_and_landing_page_render_uploaded_image_urls(): void
+    {
+        $product = $this->product('Image Product', [
+            'images' => ['products/product-image.webp'],
+        ]);
+        $landingPage = LandingPage::create([
+            'product_id' => $product->id,
+            'slug' => 'image-product',
+            'cover_image' => 'landing-pages/cover-image.webp',
+            'is_active' => true,
+        ]);
+
+        $this->get(route('storefront.index'))
+            ->assertOk()
+            ->assertSee(asset('storage/products/product-image.webp'));
+
+        $this->get(route('lp.show', $landingPage->slug))
+            ->assertOk()
+            ->assertSee(asset('storage/landing-pages/cover-image.webp'));
+    }
+
     private function product(string $name, array $attributes = []): Product
     {
         return Product::create(array_merge([
