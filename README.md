@@ -29,6 +29,8 @@ Buyer accounts are optional. Guests can still checkout and track an order with a
 
 Shipping rates and destination-area search use Mengantar. Configure `MENGANTAR_API_KEY` and `MENGANTAR_BASE_URL`, then set each warehouse's Mengantar area in Admin > Warehouses. If a product warehouse has no area, set the shared `MENGANTAR_ORIGIN_AREA_ID`; checkout reports the missing origin configuration instead of silently returning an empty courier list.
 
+Image uploads accept JPEG, PNG, GIF, and WebP. The application optimizes images to WebP when PHP GD supports WebP encoding; otherwise it stores the validated original file instead of failing the request.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.

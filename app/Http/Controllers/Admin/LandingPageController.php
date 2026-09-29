@@ -5,11 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LandingPage;
 use App\Models\Product;
+use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Validation\ValidationException;
 
 
@@ -31,7 +29,7 @@ class LandingPageController extends Controller
         return view('admin.landing-pages.create', compact('products'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ImageUploadService $images)
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
@@ -62,24 +60,20 @@ class LandingPageController extends Controller
         $validated['embed_code'] = $this->youtubeEmbedUrl($validated['embed_code'] ?? null);
 
         if ($request->hasFile('cover_image')) {
-            $manager = new ImageManager(new Driver());
-            $image = $manager->read($request->file('cover_image')->getRealPath());
-            $image->scaleDown(width: 1200);
-            $filename = 'landing-pages/' . Str::random(40) . '.webp';
-            Storage::disk('public')->put($filename, (string) $image->toWebp(80));
-            $validated['cover_image'] = $filename;
+            $validated['cover_image'] = $images->store(
+                $request->file('cover_image'),
+                'landing-pages',
+                1200
+            );
         }
 
         if ($request->hasFile('slider_images')) {
             $paths = [];
-            $manager = new ImageManager(new Driver());
+
             foreach ($request->file('slider_images') as $file) {
-                $image = $manager->read($file->getRealPath());
-                $image->scaleDown(width: 1000);
-                $filename = 'landing-pages/slider/' . Str::random(40) . '.webp';
-                Storage::disk('public')->put($filename, (string) $image->toWebp(80));
-                $paths[] = $filename;
+                $paths[] = $images->store($file, 'landing-pages/slider', 1000);
             }
+
             $validated['image_slider'] = json_encode($paths);
         } else {
             $validated['image_slider'] = null;
@@ -136,7 +130,7 @@ class LandingPageController extends Controller
         ));
     }
 
-    public function update(Request $request, LandingPage $landingPage)
+    public function update(Request $request, LandingPage $landingPage, ImageUploadService $images)
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
@@ -170,12 +164,12 @@ class LandingPageController extends Controller
             if ($landingPage->cover_image) {
                 Storage::disk('public')->delete($landingPage->cover_image);
             }
-            $manager = new ImageManager(new Driver());
-            $image = $manager->read($request->file('cover_image')->getRealPath());
-            $image->scaleDown(width: 1200);
-            $filename = 'landing-pages/' . Str::random(40) . '.webp';
-            Storage::disk('public')->put($filename, (string) $image->toWebp(80));
-            $validated['cover_image'] = $filename;
+
+            $validated['cover_image'] = $images->store(
+                $request->file('cover_image'),
+                'landing-pages',
+                1200
+            );
         }
 
         if ($request->hasFile('slider_images')) {
@@ -187,15 +181,12 @@ class LandingPageController extends Controller
                     }
                 }
             }
+
             $paths = [];
-            $manager = new ImageManager(new Driver());
             foreach ($request->file('slider_images') as $file) {
-                $image = $manager->read($file->getRealPath());
-                $image->scaleDown(width: 1000);
-                $filename = 'landing-pages/slider/' . Str::random(40) . '.webp';
-                Storage::disk('public')->put($filename, (string) $image->toWebp(80));
-                $paths[] = $filename;
+                $paths[] = $images->store($file, 'landing-pages/slider', 1000);
             }
+
             $validated['image_slider'] = json_encode($paths);
         } elseif ($request->has('keep_slider_images')) {
             $validated['image_slider'] = $landingPage->image_slider;
