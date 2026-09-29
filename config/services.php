@@ -55,6 +55,7 @@ return [
     'mengantar' => [
         'api_key' => env('MENGANTAR_API_KEY'),
         'base_url' => env('MENGANTAR_BASE_URL', 'https://app.mengantar.com'),
+        'origin_area_id' => env('MENGANTAR_ORIGIN_AREA_ID'),
     ],
 
 ];

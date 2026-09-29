@@ -8,7 +8,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Shipment;
 use App\Models\User;
-use App\Services\BiteshipService;
+use App\Services\MengantarService;
 use App\Services\WhatsAppService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -125,11 +125,12 @@ class CustomerAccountTest extends TestCase
 
     private function mockCheckoutServices(): void
     {
-        $biteship = Mockery::mock(BiteshipService::class);
-        $biteship->shouldReceive('getShippingRates')->zeroOrMoreTimes()->andReturn([
+        config(['services.mengantar.origin_area_id' => 'origin-area']);
+        $mengantar = Mockery::mock(MengantarService::class);
+        $mengantar->shouldReceive('getShippingRates')->zeroOrMoreTimes()->andReturn([
             ['code' => 'jne', 'services' => [['name' => 'REG', 'cost' => 10000]]],
         ]);
-        $this->app->instance(BiteshipService::class, $biteship);
+        $this->app->instance(MengantarService::class, $mengantar);
 
         $whatsapp = Mockery::mock(WhatsAppService::class);
         $whatsapp->shouldReceive('sendOrderConfirmation')->zeroOrMoreTimes();

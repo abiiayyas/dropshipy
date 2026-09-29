@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LandingPage;
 use App\Models\Order;
-use App\Services\BiteshipService;
+use App\Services\MengantarService;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 
@@ -35,11 +35,10 @@ class LPController extends Controller
         return view('lp.show', compact('landingPage', 'utmQuery', 'view'));
     }
 
-    public function getShippingOptions(Request $request, BiteshipService $biteship)
+    public function getShippingOptions(Request $request, MengantarService $mengantar)
     {
         $request->validate([
-            'destination_area_id' => 'nullable|string',
-            'destination_city' => 'nullable|string',
+            'destination_area_id' => 'required|string',
             'landing_page_id' => 'required|exists:landing_pages,id',
         ]);
 
@@ -48,30 +47,41 @@ class LPController extends Controller
             ->where('is_active', true)
             ->whereHas('product', fn ($query) => $query->where('is_active', true))
             ->firstOrFail();
-        $originAreaId = $landingPage->product->warehouse->mengantar_area_id ?? config('services.biteship.origin_area_id', 'IDCGK101');
 
-        $destination = [];
-        if ($request->destination_area_id) {
-            $destination['area_id'] = $request->destination_area_id;
-        } elseif ($request->destination_city) {
-            $destination['city'] = $request->destination_city;
+        $originAreaId = $this->originAreaId($landingPage);
+        if (! $originAreaId) {
+            return response()->json([
+                'couriers' => [],
+                'message' => 'Area asal gudang belum dikonfigurasi.',
+            ], 422);
         }
-        $destination['couriers'] = ['jne', 'jnt', 'sicepat'];
 
-        $couriers = $biteship->getShippingRates(
+        $couriers = $mengantar->getShippingRates(
             ['area_id' => $originAreaId],
-            $destination,
+            ['area_id' => $request->destination_area_id],
             [[
                 'name' => 'Produk',
                 'weight' => 1000,
                 'quantity' => 1,
-                'value' => 100000,
+                'value' => $landingPage->product->sell_price,
             ]]
         );
 
         return response()->json(['couriers' => $couriers]);
     }
-    public function createOrder(Request $request, WhatsAppService $whatsapp, BiteshipService $biteship)
+
+    public function searchArea(Request $request, MengantarService $mengantar)
+    {
+        $query = trim((string) $request->input('q'));
+
+        if (mb_strlen($query) < 3) {
+            return response()->json([]);
+        }
+
+        return response()->json($mengantar->searchArea($query));
+    }
+
+    public function createOrder(Request $request, WhatsAppService $whatsapp, MengantarService $mengantar)
     {
         $validated = $request->validate([
             'landing_page_id' => 'required|exists:landing_pages,id',
@@ -108,19 +118,13 @@ class LPController extends Controller
         $qty = $validated['qty'] ?? 1;
         $unitPrice = $variant ? $variant->sell_price : $landingPage->product->sell_price;
 
-        $originAreaId = $landingPage->product->warehouse->mengantar_area_id ?? config('services.biteship.origin_area_id', 'IDCGK101');
-        
-        $destination = [];
-        if (!empty($validated['destination_area_id'])) {
-            $destination['area_id'] = $validated['destination_area_id'];
-        } else {
-            $destination['city'] = $validated['customer_city'];
-        }
-        $destination['couriers'] = [strtolower($validated['shipping_courier'])];
+        $originAreaId = $this->originAreaId($landingPage);
+        abort_if(! $originAreaId, 422, 'Area asal gudang belum dikonfigurasi.');
+        abort_if(empty($validated['destination_area_id']), 422, 'Area tujuan belum dipilih.');
 
-        $couriers = $biteship->getShippingRates(
+        $couriers = $mengantar->getShippingRates(
             ['area_id' => $originAreaId],
-            $destination,
+            ['area_id' => $validated['destination_area_id']],
             [[
                 'name' => 'Produk',
                 'weight' => 1000,
@@ -197,5 +201,10 @@ class LPController extends Controller
         $whatsapp->sendOrderConfirmation($order, $paymentUrl);
 
         return redirect()->route('checkout.payment', ['publicToken' => $order->public_token]);
+    }
+    private function originAreaId(LandingPage $landingPage): ?string
+    {
+        return $landingPage->product->warehouse?->mengantar_area_id
+            ?? config('services.mengantar.origin_area_id');
     }
 }

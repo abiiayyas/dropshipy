@@ -314,11 +314,15 @@
         courierSelect.disabled = true;
 
         try {
-            const res = await fetch(`/lp/shipping-options?destination_area_id=${areaId}&landing_page_id={{ $landingPage->id }}`);
+            const res = await fetch(`/lp/shipping-options?destination_area_id=${encodeURIComponent(areaId)}&landing_page_id={{ $landingPage->id }}`);
             const data = await res.json();
-            allShippingData = data.couriers;
+            if (!res.ok) {
+                throw new Error(data.message || 'Gagal memuat tarif ongkos kirim.');
+            }
 
-            if (allShippingData && allShippingData.length > 0) {
+            allShippingData = data.couriers || [];
+
+            if (allShippingData.length > 0) {
                 courierSelect.innerHTML = allShippingData.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
                 courierSelect.disabled = false;
                 loadShippingOptions();
@@ -328,7 +332,9 @@
             }
         } catch(e) {
             console.error(e);
-            container.innerHTML = '<div class="text-center py-4 text-sm text-red-500">Gagal memuat tarif ongkos kirim. Silakan coba lagi.</div>';
+            courierSelect.innerHTML = '<option value="">Gagal memuat kurir</option>';
+            courierSelect.disabled = true;
+            container.innerHTML = `<div class="text-center py-4 text-sm text-red-500">${e.message || 'Gagal memuat tarif ongkos kirim. Silakan coba lagi.'}</div>`;
         }
     }
 
