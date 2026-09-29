@@ -60,7 +60,7 @@ $lpData = [
         {{-- Preview Footer --}}
         <div class="fixed bottom-0 left-0 right-0 lg:left-64 bg-white dark:bg-slate-900 border-t px-6 py-4 flex justify-end gap-3 z-50">
             <button type="button" @click="step = 1" class="py-2.5 px-4 rounded-lg text-sm font-medium bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50 transition-colors">Kembali Edit</button>
-            <button type="button" @click="document.getElementById('lpForm').submit()" class="py-2.5 px-6 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors">Simpan & Terbitkan</button>
+            <button type="button" @click="document.getElementById('lpForm').requestSubmit()" class="py-2.5 px-6 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors">Simpan & Terbitkan</button>
         </div>
     </div>
 </div>

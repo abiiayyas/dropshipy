@@ -1,3 +1,14 @@
+@if($errors->any())
+<div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+    <p class="font-semibold">Periksa kembali isian berikut:</p>
+    <ul class="mt-2 list-disc space-y-1 pl-5">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <div class="mb-8">
     <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Lengkapi informasi dasar di sebelah kiri, dan tambahkan media atau konten ekstra di sebelah kanan.</p>
 </div>
@@ -71,7 +82,7 @@
 
         {{-- Content --}}
         <div>
-            <label class="block text-sm font-medium text-gray-800 dark:text-slate-200 mb-2">Deskripsi Produk <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-medium text-gray-800 dark:text-slate-200 mb-2">Deskripsi Produk</label>
             <textarea name="body_content" rows="6" maxlength="600" x-model="body_content" class="py-2 px-3 block w-full border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ceritakan detail produk, masalah yang diselesaikan, dll..."></textarea>
             <div class="flex justify-end mt-1">
                 <span class="text-[10px] font-medium text-gray-400 dark:text-slate-500 tracking-wide" x-text="Math.max(0, 600 - (body_content ? body_content.length : 0)) + ' characters left'"></span>
@@ -81,7 +92,7 @@
         {{-- List --}}
         <div>
             <label class="block text-sm font-medium text-gray-800 dark:text-slate-200 mb-2">Keunggulan / List (1 per baris)</label>
-            <textarea name="list_items" rows="4" x-model="list_items" class="py-2 px-3 block w-full border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Type to add skills relevant to this project (e.g. Bahan Premium)"></textarea>
+            <textarea name="list_items" rows="4" x-model="list_items" class="py-2 px-3 block w-full border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Contoh: Bahan premium&#10;Gratis ongkir&#10;Garansi produk"></textarea>
             <div class="flex justify-end mt-1">
                 <span class="text-[10px] font-medium text-gray-400 dark:text-slate-500 tracking-wide" x-text="Math.max(0, 10 - (list_items ? list_items.split('\n').filter(Boolean).length : 0)) + ' items left'"></span>
             </div>
@@ -196,7 +207,7 @@
                 </div>
                 @endif
                 <input type="file" name="slider_images[]" accept="image/*" multiple @change="handleSliderUpload($el)" class="py-2 px-3 block w-full border border-gray-200 dark:border-slate-700 rounded-lg text-sm">
-                <p class="text-xs text-gray-400 dark:text-slate-500 mt-2">Pilih beberapa gambar sekaligus. Upload baru akan mengganti jika checkbox di atas tidak dicentang.</p>
+                <p class="text-xs text-gray-400 dark:text-slate-500 mt-2">Upload baru akan ditambahkan ke gambar lama. Matikan checkbox untuk mengganti gambar lama.</p>
             </div>
 
             {{-- Embed / YouTube --}}
@@ -352,6 +363,7 @@ function lpEditor(initial) {
         product_id: initial.product_id || '',
         template: initial.template || 'shopee',
         cover_image_url: initial.cover_image_url,
+        existingSliderPreviews: initial.sliderPreviews || [],
         sliderPreviews: initial.sliderPreviews || [],
         sliderIdx: 0,
         faqs: (initial.existingFaqs && initial.existingFaqs.length)
@@ -387,10 +399,12 @@ function lpEditor(initial) {
         },
 
         handleSliderUpload(el) {
-            this.sliderPreviews = [];
-            for (let f of el.files) {
-                this.sliderPreviews.push(URL.createObjectURL(f));
-            }
+            const section = el.closest('[x-show="activeSections.slider"]');
+            const keepExisting = section?.querySelector('input[name="keep_slider_images"]')?.checked;
+            const previews = Array.from(el.files).map(file => URL.createObjectURL(file));
+            this.sliderPreviews = keepExisting
+                ? [...this.existingSliderPreviews, ...previews]
+                : previews;
             this.sliderIdx = 0;
         },
 

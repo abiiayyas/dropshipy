@@ -36,7 +36,7 @@ class LandingPageController extends Controller
             'slug' => 'required|string|max:255|unique:landing_pages,slug',
             'headline' => 'nullable|string|max:255',
             'subheadline' => 'nullable|string|max:255',
-            'body_content' => 'nullable|string',
+            'body_content' => 'nullable|string|max:600',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
             'list_items' => 'nullable|string',
             'faq_items' => 'nullable|string',
@@ -54,8 +54,9 @@ class LandingPageController extends Controller
             'domain' => 'nullable|string|max:255',
             'is_active' => 'boolean',
             'variant_name' => 'nullable|string|max:255',
-            'template' => 'nullable|string|max:50',
+            'template' => 'nullable|in:shopee,tokopedia,blibli,tiktokshop',
         ]);
+        $validated['is_active'] = $request->boolean('is_active');
 
         $validated['embed_code'] = $this->youtubeEmbedUrl($validated['embed_code'] ?? null);
 
@@ -93,7 +94,10 @@ class LandingPageController extends Controller
 
     public function edit(LandingPage $landingPage)
     {
-        $products = Product::where('is_active', true)->get();
+        $products = Product::where(function ($query) use ($landingPage) {
+            $query->where('is_active', true)
+                ->orWhere('id', $landingPage->product_id);
+        })->orderBy('name')->get();
 
         $existingFaqs = [];
         if ($landingPage->faq_items) {
@@ -137,7 +141,7 @@ class LandingPageController extends Controller
             'slug' => 'required|string|max:255|unique:landing_pages,slug,' . $landingPage->id,
             'headline' => 'nullable|string|max:255',
             'subheadline' => 'nullable|string|max:255',
-            'body_content' => 'nullable|string',
+            'body_content' => 'nullable|string|max:600',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
             'list_items' => 'nullable|string',
             'faq_items' => 'nullable|string',
@@ -155,8 +159,9 @@ class LandingPageController extends Controller
             'domain' => 'nullable|string|max:255',
             'is_active' => 'boolean',
             'variant_name' => 'nullable|string|max:255',
-            'template' => 'nullable|string|max:50',
+            'template' => 'nullable|in:shopee,tokopedia,blibli,tiktokshop',
         ]);
+        $validated['is_active'] = $request->boolean('is_active');
 
         $validated['embed_code'] = $this->youtubeEmbedUrl($validated['embed_code'] ?? null);
 
@@ -172,17 +177,15 @@ class LandingPageController extends Controller
             );
         }
 
+        $existingSliderImages = $this->parseSliderImages($landingPage->image_slider);
+
         if ($request->hasFile('slider_images')) {
-            if ($landingPage->image_slider) {
-                $old = json_decode($landingPage->image_slider, true);
-                if (is_array($old)) {
-                    foreach ($old as $oldPath) {
-                        Storage::disk('public')->delete($oldPath);
-                    }
-                }
+            $keepExisting = $request->boolean('keep_slider_images');
+            if (! $keepExisting) {
+                $this->deleteStoredImages($existingSliderImages);
             }
 
-            $paths = [];
+            $paths = $keepExisting ? $existingSliderImages : [];
             foreach ($request->file('slider_images') as $file) {
                 $paths[] = $images->store($file, 'landing-pages/slider', 1000);
             }
@@ -191,14 +194,7 @@ class LandingPageController extends Controller
         } elseif ($request->has('keep_slider_images')) {
             $validated['image_slider'] = $landingPage->image_slider;
         } else {
-            if ($landingPage->image_slider) {
-                $old = json_decode($landingPage->image_slider, true);
-                if (is_array($old)) {
-                    foreach ($old as $oldPath) {
-                        Storage::disk('public')->delete($oldPath);
-                    }
-                }
-            }
+            $this->deleteStoredImages($existingSliderImages);
             $validated['image_slider'] = null;
         }
 
@@ -257,6 +253,28 @@ class LandingPageController extends Controller
         ];
 
         return response()->json($stats);
+    }
+
+    private function parseSliderImages(?string $value): array
+    {
+        if (blank($value)) {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+
+        return is_array($decoded)
+            ? array_values(array_filter($decoded, 'is_string'))
+            : array_values(array_filter(array_map('trim', explode("\n", $value))));
+    }
+
+    private function deleteStoredImages(array $paths): void
+    {
+        foreach ($paths as $path) {
+            if (! filter_var($path, FILTER_VALIDATE_URL)) {
+                Storage::disk('public')->delete($path);
+            }
+        }
     }
 
     private function buildFaqJson(Request $request): ?string
