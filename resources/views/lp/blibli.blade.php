@@ -102,8 +102,11 @@
             $price = $landingPage->product->sell_price;
             $fakeOriginalPrice = $price * 1.3;
             $discountPercent = 23;
-            $rating = 4.9;
-            $soldCount = 1245 + ($landingPage->orders_count ?? 0);
+            $soldCount = $landingPage->orders()->count();
+            $testimonials = $landingPage->parsed_testimonials ?? [];
+            $reviewCount = count($testimonials);
+            $ratingValue = $reviewCount > 0 ? (collect($testimonials)->avg('rating') ?? 5.0) : 0;
+            $rating = $reviewCount > 0 ? number_format($ratingValue, 1) : 0;
         @endphp
 
         {{-- Product Name & Price Card --}}
@@ -142,7 +145,7 @@
                 <span class="text-gray-300">|</span>
                 <span>{{ number_format($soldCount, 0, ',', '.') }} Terjual</span>
                 <span class="text-gray-300">|</span>
-                <span>128 Ulasan</span>
+                <span>{{ $reviewCount }} Ulasan</span>
             </div>
 
             {{-- Full-width CTA Button --}}
@@ -320,12 +323,7 @@
         {{-- Fixed Bottom CTA --}}
         <div class="fixed bottom-0 max-w-md w-full bg-white border-t border-gray-200 px-4 py-3 z-50">
             <div class="flex items-center gap-3">
-                @if($landingPage->button_url)
-                <a href="{{ $landingPage->button_url }}" target="_blank" rel="noopener" class="flex flex-col items-center justify-center w-10 flex-shrink-0 text-[#0095DA] hover:bg-blue-50 rounded-lg py-1 transition-colors">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.83 3.08 1.27 4.79 1.27 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm5.46 14.15c-.23.65-1.33 1.25-1.84 1.34-.48.09-1.12.15-3.32-.76-2.66-1.1-4.38-3.83-4.51-4.01-.14-.18-1.08-1.44-1.08-2.75 0-1.31.68-1.96.93-2.24.25-.28.54-.35.73-.35.18 0 .36 0 .52.01.17.01.39-.06.6.45.22.54.73 1.8.8 1.94.07.15.11.32.02.5-.09.18-.14.3-.27.45-.14.14-.29.31-.41.43-.14.14-.29.29-.13.56.16.27.7 1.15 1.5 1.87.97.87 1.83 1.14 2.1 1.28.27.14.43.12.59-.06.16-.18.68-.8.87-1.07.18-.27.37-.23.62-.13.25.1 1.62.77 1.9 1.05.28.27.47.43.54.67.07.24.07 1.38-.16 2.03z"></path></svg>
-                    <span class="text-[8px] font-medium">Chat</span>
-                </a>
-                @endif
+
 
                 <a id="cta-btn-bottom" href="{{ route('checkout.form', ['slug' => $landingPage->slug]) }}@if(isset($utmQuery) && $utmQuery)?{{ $utmQuery }}@endif"
                    class="flex-1 flex justify-center items-center rounded-xl text-white font-bold text-base h-12 hover:opacity-90 transition-opacity shadow-lg"
